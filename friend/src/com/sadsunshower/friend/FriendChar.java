@@ -62,6 +62,7 @@ public class FriendChar implements TrayListener {
         // override the window's rendering
         JPanel pane = new JPanel() {
             protected void paintComponent(java.awt.Graphics g) {
+                super.paintComponent(g);
                 if (g instanceof Graphics2D) {
                     render((Graphics2D) g);
                 }
