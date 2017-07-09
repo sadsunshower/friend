@@ -39,7 +39,13 @@ public class FriendChar implements TrayListener {
     
     float angle = 0.0F;
     
-    public FriendChar() {
+    // if we're on linux, our only choice is to draw a white bg
+    // seems linux cannot into clearing transparent frames
+    boolean linux;
+    
+    public FriendChar(boolean linux) {
+        this.linux = linux;
+        
         mainWin = new JFrame();
         
         // create our 'window' with no borders
@@ -68,6 +74,10 @@ public class FriendChar implements TrayListener {
                 }
             }
         };
+        
+        if (!linux) {
+            pane.setOpaque(false);
+        }
         
         // i hate swing
         pane.setSize(18, 18);
@@ -119,7 +129,12 @@ public class FriendChar implements TrayListener {
     // rendering method
     public void render(Graphics2D g2d) {
         // clear old frame
-        g2d.clearRect(0, 0, 18, 18);
+        if (linux) {
+            g2d.setColor(java.awt.Color.WHITE);
+        } else {
+            g2d.setColor(new java.awt.Color(0, 0, 0, 0));
+        }
+        g2d.fillRect(0, 0, 18, 18);
         
         if (moved) {
             // reset sleep timer

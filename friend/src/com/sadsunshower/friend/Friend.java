@@ -8,9 +8,12 @@ public class Friend {
     
     // main method
     public static void main(String[] args) {
-        FriendChar friend = new FriendChar();
+        boolean linux = false;
+        if (args.length != 0) {
+            linux = args[0].equalsIgnoreCase("-linux");
+        }
         
-        javax.swing.JFrame.setDefaultLookAndFeelDecorated(true);
+        FriendChar friend = new FriendChar(linux);
         
         // create the tray icon
         TrayManager.initialise(friend);
