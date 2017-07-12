@@ -51,8 +51,8 @@ public class FriendChar implements TrayListener {
         // create our 'window' with no borders
         mainWin.setUndecorated(true);
         mainWin.setSize(18, 18);
-        mainWin.setVisible(true);
         mainWin.setAlwaysOnTop(true);
+        mainWin.setType(javax.swing.JFrame.Type.UTILITY);
         
         // place our friend in the middle of the screen
         java.awt.Dimension ss = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
@@ -77,7 +77,10 @@ public class FriendChar implements TrayListener {
         
         if (!linux) {
             pane.setOpaque(false);
+            com.sun.awt.AWTUtilities.setWindowOpaque(mainWin, false);
         }
+        
+        mainWin.setVisible(true);
         
         // i hate swing
         pane.setSize(18, 18);
