@@ -70,7 +70,7 @@ public class AboutDialog extends javax.swing.JDialog {
         jLabel5.setFont(new java.awt.Font("Calibri Light", 0, 11)); // NOI18N
         jLabel5.setForeground(new java.awt.Color(181, 225, 140));
         jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel5.setText("Version 0");
+        jLabel5.setText("Version 1");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);

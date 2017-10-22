@@ -10,11 +10,20 @@ import javax.swing.JPanel;
 // for loading images
 import javax.imageio.ImageIO;
 
+// for behaviour 2
+import java.util.ArrayDeque;
+
 // code for the actual friend following the cursor
 public class FriendChar implements TrayListener {
+    // position we want to move to
     int goalX;
     int goalY;
     
+    // current cursor position
+    int curX;
+    int curY;
+    
+    // current friend position
     int x;
     int y;
     
@@ -43,8 +52,15 @@ public class FriendChar implements TrayListener {
     // seems linux cannot into clearing transparent frames
     boolean linux;
     
-    public FriendChar(boolean linux) {
+    // application properties
+    java.util.Properties props;
+    
+    // tracks cursor positions for behaviour 2
+    ArrayDeque<int[]> points = new ArrayDeque<>();
+    
+    public FriendChar(boolean linux, java.util.Properties props) {
         this.linux = linux;
+        this.props = props;
         
         mainWin = new JFrame();
         
@@ -125,8 +141,26 @@ public class FriendChar implements TrayListener {
     }
     
     public void moveTo(int x, int y) {
-        goalX = x;
-        goalY = y;
+        curX = x;
+        curY = y;
+        
+        // for behaviour 2, add this to the points queue
+        if (props.getProperty("behaviour").equals("2")) {
+            // don't fetch the last point if there isn't one.
+            if (!points.isEmpty()) {
+                int[] top = points.peekLast();
+                // if the updated point is close enough to the last, no point adding it
+                if ((int) Math.sqrt(((top[0] - curX) * (top[0] - curX)) + ((top[1] - curY) * (top[1] - curY))) > 15) {
+                    points.addLast(new int[] {curX, curY});
+                }
+            } else {
+                points.addLast(new int[] {curX, curY});
+            }
+        // for behaviours 0 and 1, set this as the goal
+        } else {
+            goalX = curX;
+            goalY = curY;
+        }
     }
     
     // rendering method
@@ -195,29 +229,90 @@ public class FriendChar implements TrayListener {
         } else {
             angle = (float) Math.atan((float) (y - goalY) / (float) (x - goalX));
         }
-        
+
         // because of arctan
         inverse = x < goalX;
         
-        // if the distance is under 15px, just teleport to the cursor
-        if (Math.sqrt(Math.pow(x - goalX, 2) + Math.pow(y - goalY, 2)) <= 15.0) {
-            if (x != goalX && y != goalY) {
+        // behaviour 0 = follow cursor roughly
+        if (props.getProperty("behaviour").equals("0")) {
+            // if the distance is under 15px, just teleport to the cursor
+            if (Math.sqrt(Math.pow(x - goalX, 2) + Math.pow(y - goalY, 2)) <= 15.0) {
+                if (x != goalX && y != goalY) {
+                    moved = true;
+                }
+
+                x = goalX;
+                y = goalY;
+            // otherwise, move 15px in the direction of the cursor
+            } else {
+                if (inverse) {
+                    x += (int) (15.0 * Math.cos(angle));
+                    y += (int) (15.0 * Math.sin(angle));
+                } else {
+                    x -= (int) (15.0 * Math.cos(angle));
+                    y -= (int) (15.0 * Math.sin(angle));
+                }
+
                 moved = true;
             }
-            
-            x = goalX;
-            y = goalY;
-        // otherwise, move 15px in the direction of the cursor
-        } else {
-            if (inverse) {
-                x += (int) (15.0 * Math.cos(angle));
-                y += (int) (15.0 * Math.sin(angle));
-            } else {
-                x -= (int) (15.0 * Math.cos(angle));
-                y -= (int) (15.0 * Math.sin(angle));
+        // behaviour 1 = move away from cursor if close
+        } else if (props.getProperty("behaviour").equals("1")) {
+            // if we are close enough, move away
+            if (Math.sqrt(Math.pow(x - goalX, 2) + Math.pow(y - goalY, 2)) <= 25.0) {
+                angle = -angle;
+                
+                if (inverse) {
+                    x += (int) (15.0 * Math.cos(angle));
+                    y += (int) (15.0 * Math.sin(angle));
+                } else {
+                    x -= (int) (15.0 * Math.cos(angle));
+                    y -= (int) (15.0 * Math.sin(angle));
+                }
+
+                moved = true;
             }
-            
-            moved = true;
+        // behaviour 2 = trace cursor's path
+        } else if (props.getProperty("behaviour").equals("2")) {
+            // are we moving to a point currently?
+            if (x != goalX && y != goalY) {
+                // this is (basically) the same movement code for behaviour 1
+                // if the distance is under 15px, just teleport to the cursor
+                if (Math.sqrt(Math.pow(x - goalX, 2) + Math.pow(y - goalY, 2)) <= 15.0) {
+                    moved = true;
+
+                    x = goalX;
+                    y = goalY;
+                    
+                    // set the goal as the next point if there is one
+                    if (!points.isEmpty()) {
+                        int[] pt = points.removeFirst();
+
+                        goalX = pt[0];
+                        goalY = pt[1];
+                    }
+                // otherwise, move 15px in the direction of the cursor
+                } else {
+                    if (inverse) {
+                        x += (int) (15.0 * Math.cos(angle));
+                        y += (int) (15.0 * Math.sin(angle));
+                    } else {
+                        x -= (int) (15.0 * Math.cos(angle));
+                        y -= (int) (15.0 * Math.sin(angle));
+                    }
+
+                    moved = true;
+                }
+            // if not, then check if theres another point to move to
+            } else {
+                // if there is, set that as the goal
+                if (!points.isEmpty()) {
+                    int[] pt = points.removeFirst();
+                    
+                    goalX = pt[0];
+                    goalY = pt[1];
+                }
+                // if not, do nothing
+            }
         }
         
         // progress all our animations
