@@ -15,12 +15,19 @@ import javax.imageio.ImageIO;
 
 // manages the tray icon
 public class TrayManager {
-    private static SystemTray tray = SystemTray.getSystemTray();
+    private static SystemTray tray;
     private static TrayIcon icon = null;
     
     private static TrayListener listener;
     
     public static void initialise(TrayListener listener) {
+        // stop if the system tray isnt supported
+        if (!SystemTray.isSupported()) {
+            System.out.println("Warning! System tray is not supported");
+            return;
+        }
+
+        TrayManager.tray = SystemTray.getSystemTray();
         TrayManager.listener = listener;
         
         try {
